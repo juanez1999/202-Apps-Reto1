@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "470696037037",
+    "firebase_url": "https://apps-reto1.firebaseio.com",
+    "project_id": "apps-reto1",
+    "storage_bucket": "apps-reto1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470696037037:android:233b0f92935d8236ddd424",
+        "android_client_info": {
+          "package_name": "com.example.reto1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "470696037037-kttnnvl623g43tosc00k30ajn3ga9tn7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALSfn5cBmstSRLMSz86n7TEkSTCG9SYVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "470696037037-kttnnvl623g43tosc00k30ajn3ga9tn7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
