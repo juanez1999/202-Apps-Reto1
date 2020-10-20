@@ -21,7 +21,7 @@ public class UserLocationWorker extends Thread{
         HTTPSWebUtilDomi https = new HTTPSWebUtilDomi();
         Gson gson = new Gson();
         while (isAlive){
-            delay(5000);
+            delay(2000);
             if(ref.getUserLocation() != null) {
                 https.PUTrequest("https://apps-reto1.firebaseio.com/users/"+ref.getName()+"/location.json",gson.toJson(ref.getUserLocation()));
             }
