@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.reto1.comm.HTTPSWebUtilDomi;
 import com.example.reto1.comm.HoleWorker;
+import com.example.reto1.comm.TrackHolesWorker;
 import com.example.reto1.comm.TrackUsersWorker;
 import com.example.reto1.comm.UserLocationWorker;
 import com.example.reto1.model.HoleLocation;
@@ -27,6 +28,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -51,6 +54,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private HoleWorker holeWorker;
     private UserLocationWorker locationWorker;
     private TrackUsersWorker trackUsersWorker;
+    private TrackHolesWorker trackHolesWorker;
 
     private HoleLocation currentLocation;
     private UserLocation userLocation;
@@ -62,6 +66,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private String address;
 
     private ArrayList<Marker> usersMarkers;
+    private ArrayList<Marker> holesMarkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +85,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         name = getIntent().getStringExtra("name");
         password = getIntent().getStringExtra("password");
         usersMarkers = new ArrayList<>();
+        holesMarkers = new ArrayList<>();
     }
 
     @SuppressLint("MissingPermission")
@@ -98,12 +104,15 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         locationWorker.start();
         trackUsersWorker = new TrackUsersWorker(this);
         trackUsersWorker.start();
+        trackHolesWorker = new TrackHolesWorker(this);
+        trackHolesWorker.start();
     }
 
     public void onDestroy(){
         holeWorker.finish();
         locationWorker.finish();
         trackUsersWorker.finish();
+        trackHolesWorker.finish();
         super.onDestroy();
     }
 
@@ -197,7 +206,6 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     public void updateMarkers(ArrayList<UserLocation> locations){
         runOnUiThread(
                 ()->{
-
                     for (int i = 0; i < usersMarkers.size(); i++) {
                         Marker m = usersMarkers.get(i);
                         m.remove();
@@ -211,8 +219,34 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
                         usersMarkers.add(m);
                     }
         });
-
     }
+
+    public void makeHole(ArrayList<HoleLocation> locations){
+        Log.e(">>>>>>", "entró");
+        runOnUiThread(
+                ()->{
+                    for (int i = 0; i < holesMarkers.size(); i++) {
+                        Marker m = holesMarkers.get(i);
+                        m.remove();
+                    }
+                    holesMarkers.clear();
+                    Log.e(">>>>>>", String.valueOf(locations.size()));
+
+                    for (int i = 0; i < locations.size(); i++) {
+                        HoleLocation location = locations.get(i);
+                        LatLng latLng = new LatLng(location.getLat(),location.getLng());
+                        boolean isValidated = location.getIsValidated();
+                        Log.e(">>>>>>", locations.get(i).toString());
+                        Marker m = mMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                        );
+                        holesMarkers.add(m);
+                    }
+                }
+        );
+    }
+
 
     public HoleLocation getCurrentLocation() {
         return currentLocation;

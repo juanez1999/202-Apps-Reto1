@@ -28,14 +28,15 @@ public class TrackUsersWorker extends Thread {
         while (isAlive){
             delay(5000);
             String json = https.GETrequest("https://apps-reto1.firebaseio.com/users.json");
+            //Log.e(">>>", json);
             Type type = new TypeToken<HashMap<String, PositionMarker>>(){}.getType();
             HashMap<String, PositionMarker> users = gson.fromJson(json,type);
 
             ArrayList<UserLocation> locations = new ArrayList<>();
             users.forEach((key,value)->{
-                Log.e(">>>", key);
+                //Log.e(">>>", key);
                 PositionMarker positionMarker = value;
-                Log.e(">>>", String.valueOf(value));
+                //Log.e(">>>", String.valueOf(value));
                 if(positionMarker.getLocation() != null){
                     double lat = positionMarker.getLocation().getLat();
                     double lng = positionMarker.getLocation().getLng();

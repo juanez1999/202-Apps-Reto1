@@ -30,11 +30,11 @@ public class HoleLocation {
         this.lng = lng;
     }
 
-    public boolean isValidate() {
+    public boolean getIsValidated() {
         return isValidated;
     }
 
-    public void setValidate(boolean isValidate) {
+    public void setIsValidated(boolean isValidate) {
         this.isValidated = isValidate;
     }
 }
