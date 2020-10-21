@@ -21,6 +21,7 @@ import com.example.reto1.comm.HTTPSWebUtilDomi;
 import com.example.reto1.comm.HoleWorker;
 import com.example.reto1.comm.TrackHolesWorker;
 import com.example.reto1.comm.TrackUsersWorker;
+import com.example.reto1.comm.UpdateHolesStateWorker;
 import com.example.reto1.comm.UserLocationWorker;
 import com.example.reto1.model.HoleLocation;
 import com.example.reto1.model.UserLocation;
@@ -55,6 +56,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private Button btnConfirm;
     private Gson gson;
     private HoleWorker holeWorker;
+    private UpdateHolesStateWorker updateHolesStateWorker;
     private UserLocationWorker locationWorker;
     private TrackUsersWorker trackUsersWorker;
     private TrackHolesWorker trackHolesWorker;
@@ -64,6 +66,8 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
 
     private String name;
     private String password;
+    private String id;
+    private Boolean verify;
 
     private RegisterHoleFragment dialog;
     private String address;
@@ -91,6 +95,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         password = getIntent().getStringExtra("password");
         usersMarkers = new ArrayList<>();
         holesMarkers = new ArrayList<>();
+        verify = true;
     }
 
     @SuppressLint("MissingPermission")
@@ -177,6 +182,8 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
                 dialog.show(getSupportFragmentManager(), "ConfirmHole");
                 break;
             case R.id.btnConfirm:
+                updateHolesStateWorker = new UpdateHolesStateWorker(this);
+                updateHolesStateWorker.start();
                 Toast.makeText(this,"Holis",Toast.LENGTH_SHORT).show();
                 break;
         }
@@ -266,6 +273,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
 
             if(!name.equals(location.getUser()) && location.getIsValidated() == false){
                 int distance = (int) SphericalUtil.computeDistanceBetween(point1,point2);
+                id = location.getId();
                 Log.e(">>>", location.getId());
                 Log.e(">>>", distance+"");
                 if(distance <= 5){
@@ -285,10 +293,17 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         return currentLocation;
     }
 
+    public Boolean getVerify() {
+        return verify;
+    }
+
     public String getName() {
         return name;
     }
 
+    public String getId() {
+        return id;
+    }
 
     public UserLocation getUserLocation() {
         return userLocation;
