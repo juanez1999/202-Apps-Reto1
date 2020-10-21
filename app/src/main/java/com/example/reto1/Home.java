@@ -35,6 +35,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.maps.android.SphericalUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class Home extends FragmentActivity implements OnMapReadyCallback, LocationListener, View.OnClickListener, RegisterHoleFragment.OnRegisterListener {
 
@@ -50,6 +52,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private LocationManager manager;
     //private Marker me;
     private Button btnAdd;
+    private Button btnConfirm;
     private Gson gson;
     private HoleWorker holeWorker;
     private UserLocationWorker locationWorker;
@@ -73,6 +76,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         btnAdd = findViewById(R.id.btnAdd);
+        btnConfirm = findViewById(R.id.btnConfirm);
         gson = new Gson();
         https = new HTTPSWebUtilDomi();
 
@@ -82,6 +86,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         mapFragment.getMapAsync(this);
         manager = (LocationManager)getSystemService(LOCATION_SERVICE);
         btnAdd.setOnClickListener(this);
+        btnConfirm.setOnClickListener(this);
         name = getIntent().getStringExtra("name");
         password = getIntent().getStringExtra("password");
         usersMarkers = new ArrayList<>();
@@ -99,13 +104,14 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,2,this);
         setInitialPos();
 
-        holeWorker = new HoleWorker(this);
+
         locationWorker = new UserLocationWorker(this);
         locationWorker.start();
         trackUsersWorker = new TrackUsersWorker(this);
         trackUsersWorker.start();
         trackHolesWorker = new TrackHolesWorker(this);
         trackHolesWorker.start();
+        btnConfirm.setVisibility(View.INVISIBLE);
     }
 
     public void onDestroy(){
@@ -137,7 +143,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
             me.setPosition(myPos);
         }*/
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 17));
-        currentLocation = new HoleLocation(location.getLatitude(), location.getLongitude(),false);
+        currentLocation = new HoleLocation(location.getLatitude(), location.getLongitude(),false,name, UUID.randomUUID().toString());
         userLocation = new UserLocation(location.getLatitude(),location.getLongitude());
     }
 
@@ -170,14 +176,17 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
                 dialog.setListener(this);
                 dialog.show(getSupportFragmentManager(), "ConfirmHole");
                 break;
+            case R.id.btnConfirm:
+                Toast.makeText(this,"Holis",Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
     @Override
     public void onRegister() {
         dialog.dismiss();
+        holeWorker = new HoleWorker(this);
         holeWorker.start();
-        Log.e(">>>>", gson.toJson(currentLocation));
     }
 
     private void getAddressFromLocation(double latitude, double longitude) {
@@ -222,7 +231,6 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     }
 
     public void makeHole(ArrayList<HoleLocation> locations){
-        Log.e(">>>>>>", "entró");
         runOnUiThread(
                 ()->{
                     for (int i = 0; i < holesMarkers.size(); i++) {
@@ -247,6 +255,31 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         );
     }
 
+    @SuppressLint("MissingPermission")
+    public void verifyHole(ArrayList<HoleLocation> locations){
+        Location myPos = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        for (int i = 0; i < locations.size(); i++) {
+            HoleLocation location = locations.get(i);
+
+            LatLng point1 = new LatLng(myPos.getLatitude(),myPos.getLongitude());
+            LatLng point2 = new LatLng(location.getLat(),location.getLng());
+
+            if(!name.equals(location.getUser()) && location.getIsValidated() == false){
+                int distance = (int) SphericalUtil.computeDistanceBetween(point1,point2);
+                Log.e(">>>", location.getId());
+                Log.e(">>>", distance+"");
+                if(distance <= 5){
+                    runOnUiThread(()->{
+                        btnConfirm.setVisibility(View.VISIBLE);
+                    });
+                }else{
+                    runOnUiThread(()->{
+                        btnConfirm.setVisibility(View.INVISIBLE);
+                    });
+                }
+            }
+        }
+    }
 
     public HoleLocation getCurrentLocation() {
         return currentLocation;
@@ -255,6 +288,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     public String getName() {
         return name;
     }
+
 
     public UserLocation getUserLocation() {
         return userLocation;

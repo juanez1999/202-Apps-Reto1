@@ -23,7 +23,7 @@ public class HoleWorker extends Thread {
 
     public HoleWorker(Home ref) {
         this.ref = ref;
-        isAlive = true;
+        this.isAlive = true;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class HoleWorker extends Thread {
         while (isAlive){
             delay(1000);
             if(ref.getCurrentLocation() != null) {
-                https.PUTrequest("https://apps-reto1.firebaseio.com/holes/"+ref.getName()+".json",gson.toJson(ref.getCurrentLocation()));
+                https.PUTrequest("https://apps-reto1.firebaseio.com/holes/"+ref.getCurrentLocation().getId()+".json",gson.toJson(ref.getCurrentLocation()));
             }
             isAlive = false;
         }

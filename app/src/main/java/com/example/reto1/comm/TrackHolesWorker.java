@@ -4,9 +4,6 @@ import android.util.Log;
 
 import com.example.reto1.Home;
 import com.example.reto1.model.HoleLocation;
-import com.example.reto1.model.HolesContainer;
-import com.example.reto1.model.PositionMarker;
-import com.example.reto1.model.UserLocation;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -32,23 +29,28 @@ public class TrackHolesWorker extends Thread {
         while (isAlive){
             delay(5000);
             String json = https.GETrequest("https://apps-reto1.firebaseio.com/holes.json");
-            Log.e(">>>", json);
-            Type type = new TypeToken<HashMap<String, HolesContainer>>(){}.getType();
-            HashMap<String, HolesContainer> holes = gson.fromJson(json,type);
+            //Log.e(">>>", json);
+            Type type = new TypeToken<HashMap<String, HoleLocation>>() {
+            }.getType();
+            HashMap<String, HoleLocation> holes = gson.fromJson(json, type);
 
             ArrayList<HoleLocation> locations = new ArrayList<>();
-            Log.e("Locations>>>>>", String.valueOf(holes));
-            holes.forEach((key,value)->{
-                HolesContainer holesContainer = value;
-                if(holesContainer.getLocation() != null){
-                    double lat = holesContainer.getLocation().getLat();
-                    double lng = holesContainer.getLocation().getLng();
-                    boolean isValidated = holesContainer.getLocation().getIsValidated();
-                    locations.add(new HoleLocation(lat,lng,isValidated));
-                    Log.e("Locations>>>>>", String.valueOf(locations.size()));
-                }
-            });
-            ref.makeHole(locations);
+            if(holes != null ){
+                holes.forEach((key, value) -> {
+                    HoleLocation holeLocation = value;
+                    //if(holeLocation != null){
+                    double lat = holeLocation.getLat();
+                    double lng = holeLocation.getLng();
+                    boolean isValidated = holeLocation.getIsValidated();
+                    String user = holeLocation.getUser();
+                    String id = holeLocation.getId();
+                    locations.add(new HoleLocation(lat, lng, isValidated,user,id));
+                    //Log.e("Locations>>>>>", String.valueOf(locations.size()));
+                    //}
+                });
+                ref.makeHole(locations);
+                ref.verifyHole(locations);
+            }
         }
     }
 
