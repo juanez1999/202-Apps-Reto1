@@ -23,18 +23,7 @@ public class UpdateHolesStateWorker extends Thread{
     public void run(){
         HTTPSWebUtilDomi https = new HTTPSWebUtilDomi();
         Gson gson = new Gson();
-        while (isAlive){
-            delay(1000);
-            https.PUTrequest("https://apps-reto1.firebaseio.com/holes/"+ref.getId()+"/isValidated"+".json",gson.toJson(ref.getVerify()));
-        }
-    }
-
-    public void delay(long time){
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        https.PUTrequest("https://apps-reto1.firebaseio.com/holes/"+ref.getId()+"/isValidated"+".json",gson.toJson(ref.getVerify()));
     }
 
     public void finish() {

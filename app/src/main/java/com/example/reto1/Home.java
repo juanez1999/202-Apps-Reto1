@@ -2,6 +2,7 @@ package com.example.reto1;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.reto1.comm.HTTPSWebUtilDomi;
@@ -39,8 +41,11 @@ import com.google.gson.reflect.TypeToken;
 import com.google.maps.android.SphericalUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,10 +56,10 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private GoogleMap mMap;
     private HTTPSWebUtilDomi https;
     private LocationManager manager;
-    //private Marker me;
     private Button btnAdd;
     private Button btnConfirm;
-    private Gson gson;
+    private ConstraintLayout viewHole;
+    private TextView meters;
     private HoleWorker holeWorker;
     private UpdateHolesStateWorker updateHolesStateWorker;
     private UserLocationWorker locationWorker;
@@ -65,7 +70,6 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     private UserLocation userLocation;
 
     private String name;
-    private String password;
     private String id;
     private Boolean verify;
 
@@ -81,21 +85,21 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         setContentView(R.layout.activity_home);
         btnAdd = findViewById(R.id.btnAdd);
         btnConfirm = findViewById(R.id.btnConfirm);
-        gson = new Gson();
         https = new HTTPSWebUtilDomi();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        manager = (LocationManager)getSystemService(LOCATION_SERVICE);
+        manager = (LocationManager) getSystemService(LOCATION_SERVICE);
         btnAdd.setOnClickListener(this);
         btnConfirm.setOnClickListener(this);
         name = getIntent().getStringExtra("name");
-        password = getIntent().getStringExtra("password");
         usersMarkers = new ArrayList<>();
         holesMarkers = new ArrayList<>();
         verify = true;
+        viewHole = findViewById(R.id.viewHole);
+        meters = findViewById(R.id.home_distanceHole_tv);
     }
 
     @SuppressLint("MissingPermission")
@@ -106,7 +110,7 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
 
-        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,2,this);
+        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 2, this);
         setInitialPos();
 
 
@@ -117,9 +121,10 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         trackHolesWorker = new TrackHolesWorker(this);
         trackHolesWorker.start();
         btnConfirm.setVisibility(View.INVISIBLE);
+        viewHole.setVisibility(View.INVISIBLE);
     }
 
-    public void onDestroy(){
+    public void onDestroy() {
         holeWorker.finish();
         locationWorker.finish();
         trackUsersWorker.finish();
@@ -128,9 +133,9 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     }
 
     @SuppressLint("MissingPermission")
-    public void setInitialPos(){
-       Location location = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if(location != null) {
+    public void setInitialPos() {
+        Location location = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location != null) {
             updateMyLocation(location);
         }
     }
@@ -140,16 +145,12 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         updateMyLocation(location);
     }
 
-    public void updateMyLocation (Location location){
+    public void updateMyLocation(Location location) {
         LatLng myPos = new LatLng(location.getLatitude(), location.getLongitude());
-        /*if(me==null) {
-            me = mMap.addMarker(new MarkerOptions().position(myPos).title("Mi posición"));
-        }else{
-            me.setPosition(myPos);
-        }*/
+
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(myPos, 17));
-        currentLocation = new HoleLocation(location.getLatitude(), location.getLongitude(),false,name, UUID.randomUUID().toString());
-        userLocation = new UserLocation(location.getLatitude(),location.getLongitude());
+        currentLocation = new HoleLocation(location.getLatitude(), location.getLongitude(), false, name, UUID.randomUUID().toString());
+        userLocation = new UserLocation(location.getLatitude(), location.getLongitude());
     }
 
 
@@ -171,20 +172,19 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
     @Override
     @SuppressLint("MissingPermission")
     public void onClick(View view) {
-      Location location = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location location = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-        switch (view.getId()){
+        switch (view.getId()) {
             case R.id.btnAdd:
                 getAddressFromLocation(location.getLatitude(), location.getLongitude());
                 //Mostrar el modal
-                dialog = RegisterHoleFragment.newInstance(location.getLatitude()+","+location.getLongitude(), address);
+                dialog = RegisterHoleFragment.newInstance(location.getLatitude() + "," + location.getLongitude(), address);
                 dialog.setListener(this);
                 dialog.show(getSupportFragmentManager(), "ConfirmHole");
                 break;
             case R.id.btnConfirm:
                 updateHolesStateWorker = new UpdateHolesStateWorker(this);
                 updateHolesStateWorker.start();
-                Toast.makeText(this,"Holis",Toast.LENGTH_SHORT).show();
                 break;
         }
     }
@@ -219,9 +219,9 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
         }
     }
 
-    public void updateMarkers(ArrayList<UserLocation> locations){
+    public void updateMarkers(ArrayList<UserLocation> locations) {
         runOnUiThread(
-                ()->{
+                () -> {
                     for (int i = 0; i < usersMarkers.size(); i++) {
                         Marker m = usersMarkers.get(i);
                         m.remove();
@@ -230,16 +230,18 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
 
                     for (int i = 0; i < locations.size(); i++) {
                         UserLocation location = locations.get(i);
-                        LatLng latLng = new LatLng(location.getLat(),location.getLng());
-                        Marker m = mMap.addMarker(new MarkerOptions().position(latLng));
+                        LatLng latLng = new LatLng(location.getLat(), location.getLng());
+                        Marker m = mMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
                         usersMarkers.add(m);
                     }
-        });
+                });
     }
 
-    public void makeHole(ArrayList<HoleLocation> locations){
+    public void makeHole(ArrayList<HoleLocation> locations) {
         runOnUiThread(
-                ()->{
+                () -> {
                     for (int i = 0; i < holesMarkers.size(); i++) {
                         Marker m = holesMarkers.get(i);
                         m.remove();
@@ -249,44 +251,78 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
 
                     for (int i = 0; i < locations.size(); i++) {
                         HoleLocation location = locations.get(i);
-                        LatLng latLng = new LatLng(location.getLat(),location.getLng());
+                        LatLng latLng = new LatLng(location.getLat(), location.getLng());
                         boolean isValidated = location.getIsValidated();
                         Log.e(">>>>>>", locations.get(i).toString());
-                        Marker m = mMap.addMarker(new MarkerOptions()
-                                .position(latLng)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                        );
-                        holesMarkers.add(m);
+                        if (isValidated == false) {
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(latLng)
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.notvalidated))
+                            );
+                            holesMarkers.add(m);
+                        } else {
+                            Marker m = mMap.addMarker(new MarkerOptions()
+                                    .position(latLng)
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.validated))
+                            );
+                            holesMarkers.add(m);
+                        }
                     }
                 }
         );
     }
 
     @SuppressLint("MissingPermission")
-    public void verifyHole(ArrayList<HoleLocation> locations){
+    public void verifyHole(ArrayList<HoleLocation> locations) {
         Location myPos = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         for (int i = 0; i < locations.size(); i++) {
             HoleLocation location = locations.get(i);
 
-            LatLng point1 = new LatLng(myPos.getLatitude(),myPos.getLongitude());
-            LatLng point2 = new LatLng(location.getLat(),location.getLng());
+            LatLng point1 = new LatLng(myPos.getLatitude(), myPos.getLongitude());
+            LatLng point2 = new LatLng(location.getLat(), location.getLng());
 
-            if(!name.equals(location.getUser()) && location.getIsValidated() == false){
-                int distance = (int) SphericalUtil.computeDistanceBetween(point1,point2);
+            if (!name.equals(location.getUser()) && location.getIsValidated() == false) {
+                int distance = (int) SphericalUtil.computeDistanceBetween(point1, point2);
                 id = location.getId();
                 Log.e(">>>", location.getId());
-                Log.e(">>>", distance+"");
-                if(distance <= 5){
-                    runOnUiThread(()->{
+                Log.e(">>>", distance + "");
+                if (distance <= 20) {
+                    runOnUiThread(() -> {
                         btnConfirm.setVisibility(View.VISIBLE);
                     });
-                }else{
-                    runOnUiThread(()->{
+                } else {
+                    runOnUiThread(() -> {
                         btnConfirm.setVisibility(View.INVISIBLE);
                     });
                 }
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    public void distanceUserToHole(ArrayList<HoleLocation> locations) {
+        Location myPos = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        ArrayList<Integer> distances = new ArrayList<>();
+
+        for (int i = 0; i < locations.size(); i++) {
+            HoleLocation location = locations.get(i);
+            if (location.getIsValidated() == true) {
+                LatLng point1 = new LatLng(myPos.getLatitude(), myPos.getLongitude());
+                LatLng point2 = new LatLng(location.getLat(), location.getLng());
+                int distance = (int) SphericalUtil.computeDistanceBetween(point1, point2);
+                distances.add(distance);
+            }
+        }
+        if (distances.size() > 0) {
+            Collections.sort(distances);
+            runOnUiThread(
+                    () -> {
+                        viewHole.setVisibility(View.VISIBLE);
+                        meters.setText("A " + distances.get(0) + "m se encuentra un hueco.");
+                    }
+            );
+        }
+
     }
 
     public HoleLocation getCurrentLocation() {

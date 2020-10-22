@@ -50,6 +50,7 @@ public class TrackHolesWorker extends Thread {
                 });
                 ref.makeHole(locations);
                 ref.verifyHole(locations);
+                ref.distanceUserToHole(locations);
             }
         }
     }
