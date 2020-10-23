@@ -317,8 +317,10 @@ public class Home extends FragmentActivity implements OnMapReadyCallback, Locati
             Collections.sort(distances);
             runOnUiThread(
                     () -> {
-                        viewHole.setVisibility(View.VISIBLE);
-                        meters.setText("A " + distances.get(0) + "m se encuentra un hueco.");
+                        if(distances.get(0) <= 200){
+                            viewHole.setVisibility(View.VISIBLE);
+                            meters.setText("A " + distances.get(0) + "m se encuentra un hueco.");
+                        }
                     }
             );
         }
